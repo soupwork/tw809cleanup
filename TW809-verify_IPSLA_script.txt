@@ -1,0 +1,21 @@
+!TasWater cellular outage mitigation script
+!version 01.08 ****16 Mar 2020 1130 hrs
+!this ver reduces number of sms messages, adds additional numbers to "permit" for commandoversms
+!MESD Change ID 3260
+!cisco TAC 688337261
+!
+!verify IP SLA policies
+
+
+show ip sla stat
+ 
+show ip sla sum
+ 
+sh track 3
+sh track 1
+sh track 2
+sh track 4
+sh track 5
+sh track 66
+
+!show event manager 

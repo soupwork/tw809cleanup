@@ -9,21 +9,30 @@ import os
 
 class RemoteRouter():
     """create a router object for Netmiko. """
-    def __init__(self,loginID,ipAddy):
-        self.ipAddy = ipAddy
-        self.loginuser=loginID[0]
-        self.loginpass=loginID[1]
-        self.devDict = {'IPADDY':ipAddy, 'HOSTNAME':'',
-            'SHVER':'', 'DIRFLASH':'', 'SHIPINTBRI':''}
+    def __init__(self,loginID,ipAddy='', devDict=''):
+        if ipAddy or devDict:
+            self.ipAddy = ipAddy
+            self.loginuser=loginID[0]
+            self.loginpass=loginID[1]
+            
+        if devDict:
+            print("found Dev Dictionary")
+            self.ipAddy=devDict['IPADDY']    
+            self.devDict = devDict
+        else:    
+            print("initialze blank dict in RemoteRouter init")
+            self.devDict = {'IPADDY':ipAddy, 'HOSTNAME':'','SHVER':'','DIRFLASH':'','SHIPINTBRI':'',
+            'SHCELL':'','UPTIME':'','VERSION':'','MODELNUM':'','SERIALNUM':'','CONFREG':''}
+
         routername = ""
-        net_connect = self.connectToRouter(ipAddy)
+        net_connect = self.connectToRouter(self.ipAddy)
 
         if net_connect == "no connect":
             print("no connection")
             
         else:    
             routername = self.getHostname(net_connect)
-            pass
+  
         
         if routername == "":
             print("unable to connect to remote router")
@@ -57,7 +66,7 @@ class RemoteRouter():
             print( self.devDict['DIRFLASH'])
 
         except:
-            print("unable to connect to host")    
+            print("unable to connect to host-connectToRouter")    
             return("no connect")
 
        
@@ -87,6 +96,14 @@ class RemoteRouter():
         dirflash = net_connect.send_command('dir flash:')
         
         return(dirflash)
+
+    def sendScript(self,ipAddy, cmdlist, log=True):
+        loglist = []
+        print("inside sendScript")
+        net_connect = self.connectToRouter(ipAddy)
+        log = net_connect.send_config_set(cmdlist)
+        print("log in sendscript is ", log)
+
    
 
 

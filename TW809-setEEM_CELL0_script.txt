@@ -1,0 +1,67 @@
+!TasWater cellular outage mitigation script
+!version 01.08 ****16 Mar 2020 1130 hrs
+!this ver reduces number of sms messages, adds additional numbers to "permit" for commandoversms
+!MESD Change ID 3260
+!cisco TAC 688337261
+!
+!set EEM Cell0 Protocol applet
+ 
+event manager applet TRACK_CELL0_DOWN
+ 
+  event track 3 state down maxrun 1500
+  !event track none to disconnect the EEM Script from the IP SLA
+  !this will allow the EEM script to be run manually, and will not autorun
+  !
+  action 01.0 syslog msg "int cell 0 is down"
+  !action 01.1
+  !action 01.2
+  !action 01.3
+ 
+  action 02.0 cli command "enable"
+  action 02.4 cli command "show track 66"
+  action 02.5 cli command "show track 1"
+  action 02.6 cli command "show track 2"
+  action 02.7 cli command "show track 3"
+ 
+  action 02.9 cli command "show track 5"
+ 
+  action 04.0 wait 360
+  action 04.1 puts "wait 6 mins to send sms"
+  ! action 04.2 cli command "cellular 0 lte sms send 5277 'IP SLA Interruption from <host>' "
+ 
+  action 06.0 syslog msg  "EEM clearing cell interface"
+  action 06.1 cli command "clear int cell 0"
+ 
+  action 07.0 cli command "reload in 10 reason 'Cell0 lost contact' " pattern "\[confirm\]"
+  action 07.1 cli command "y"
+ 
+  action 07.5 wait 300
+  action 07.6 puts "wait 5 mins to send sms"
+  action 07.7 cli command "cellular 0 lte sms send 5277 'Cell0 Protocol Interruption from <host>. Reloading' "
+ 
+  
+  
+  action 08.0 syslog msg "Clear Cell 0 failed. reloading router in 10 min due to IP SLA 3"
+  action 08.1 cli command "sh log | append flash:shlog.txt"
+  action 08.3 cli command "clear log" pattern "\[confirm\]"
+  action 08.4 cli command "y" 
+  action 08.6 cli command "sh cellular 0 radio history all | append flash:shcellrad.txt"
+!
+!
+ 
+event manager applet TRACK_CELL0_UP
+ 
+  event track 3 state up maxrun 1500
+  !event track none to disconnect the EEM Script from the IP SLA
+  !this will allow the EEM script to be run manually, and will not autorun
+  !
+  action 01.0 syslog msg "IP SLA 3 restored connection to network host"
+  action 02.0 cli command "enable"
+  action 03.0 cli command "reload cancel"
+  !wait 10 mins before sending sms message to compensate for interface flapping
+  action 03.5 wait 600
+!  action 04.0 cli command "cellular 0 lte sms send 5277 'Cell 0 restored on <host>'"
+ 
+  action 09.0 syslog msg "int cell 0 protocol has recovered"
+ 
+event manager environment whitelist (61436601403|61477743389|61409247343|5277)

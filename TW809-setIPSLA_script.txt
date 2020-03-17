@@ -1,0 +1,59 @@
+!TasWater cellular outage mitigation script
+!version 01.08 ****16 Mar 2020 1130 hrs
+!this ver reduces number of sms messages, adds additional numbers to "permit" for commandoversms
+!MESD Change ID 3260
+!cisco TAC 688337261
+!
+!set IP SLA policies
+ip sla 1
+!SCADA Nexus HSRP gateway 10.97.31.1
+!taswater time server 10.97.31.20
+  icmp-echo 10.97.31.1
+  frequency 60
+                !one ping every 60 secs
+! threshold 15000
+                !timeout 15,000 ms (15s) upper threshold value
+  timeout 10000
+                !wait 10,000 ms(10s) for a icmp response
+ 
+ip sla 2
+!second target - preferably a telstra cell ip
+  icmp-echo 10.97.31.20
+  frequency 60
+                !one ping every 60 secs
+! threshold 15000
+                !timeout 15,000 ms (15s) upper threshold value
+  timeout 10000
+                !wait 10,000 ms(10s) for a icmp response
+ 
+!ip sla 3
+! monitor the cell 0 interface for up/down status
+ 
+!ip sla 4
+!removed North NTP server
+               
+ip sla 5
+!Fourth target -  telstra cell ip
+  icmp-echo 172.26.20.38
+  frequency 60
+                !one ping every 60 secs
+! threshold 15000
+                !timeout 15,000 ms (15s) upper threshold value
+  timeout 10000
+                !wait 10,000 ms(10s) for a icmp response            
+ 
+ip sla schedule 1 life forever start now
+ip sla schedule 2 life forever start now
+ 
+ip sla schedule 5 life forever start now
+ 
+track 1 ip sla 1 reachability
+track 2 ip sla 2 reachability
+track 3 interface cellular 0 line-protocol
+ 
+track 5 ip sla 5 reachability
+ 
+track 66 list boolean or
+  object 1
+  object 2
+  object 5
